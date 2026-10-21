@@ -38,6 +38,18 @@ jobs:
           else
             echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
+      - name: What a nuget.org approval would release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PUBLISH: ${{ steps.nuget.outputs.publish }}
+        run: |
+          echo "### CloudPaperGroup.PostmarkDotNet $VERSION" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$PUBLISH" = "true" ]; then
+            echo "This version is not on nuget.org yet. The nuget-org job asks for an approval." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "This version is already on nuget.org. The nuget-org job is skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
       - run: dotnet pack src/Postmark/Postmark.csproj -c Release -o out
       - uses: actions/upload-artifact@v7
         with:
@@ -75,12 +87,6 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: What this approval releases
-        env:
-          VERSION: ${{ needs.pack.outputs.version }}
-        run: |
-          echo "### CloudPaperGroup.PostmarkDotNet $VERSION" >> "$GITHUB_STEP_SUMMARY"
-          echo "Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
@@ -96,4 +102,4 @@ jobs:
           user: ${{ vars.NUGET_USER }}
       - env:
           NUGET_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
-        run: dotnet nuget push "out/*.nupkg" --api-key "$NUGET_KEY" --source https://api.nuget.org/v3/index.json
+        run: dotnet nuget push "out/*.nupkg" --api-key "$NUGET_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate

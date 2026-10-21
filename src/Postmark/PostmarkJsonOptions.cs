@@ -27,12 +27,16 @@ namespace PostmarkDotNet
         /// <see cref="PostmarkResponse"/> and every response type the client reads. Setting <c>null</c> restores the
         /// default. Do not share the instance you assign with other code: the first call makes it read-only.
         /// </remarks>
-        /// <exception cref="ArgumentException">The options have no <see cref="JsonSerializerOptions.TypeInfoResolver"/>
-        /// and reflection-based serialization is off, so they could not read any response.</exception>
+        /// <exception cref="ArgumentException">The options cannot read <see cref="PostmarkResponse"/>: they have no
+        /// <see cref="JsonSerializerOptions.TypeInfoResolver"/> while reflection-based serialization is off, or their
+        /// resolver does not cover the type (for example <see cref="JsonSerializerOptions.Default"/> with reflection off).
+        /// </exception>
         public static JsonSerializerOptions Response
         {
             get => _response;
-            set => _response = value == null ? ReadOnly(CreateDefaultResponse()) : RequireResolver(value, nameof(Response));
+            set => _response = value == null
+                ? ReadOnly(CreateDefaultResponse())
+                : RequireResolverFor(typeof(PostmarkResponse), value, nameof(Response));
         }
 
         /// <summary>
@@ -40,14 +44,20 @@ namespace PostmarkDotNet
         /// </summary>
         /// <remarks>
         /// The default is read-only. Start from <see cref="CreateDefaultRequest"/> to keep the string escaping the API
-        /// expects. Setting <c>null</c> restores the default. Do not share the instance you assign with other code.
+        /// expects. A source-generated resolver must cover <see cref="PostmarkMessage"/> and every request type the
+        /// client writes, including the types of your template models: a type it does not cover makes the send throw
+        /// <see cref="NotSupportedException"/>. Setting <c>null</c> restores the default. Do not share the instance you
+        /// assign with other code.
         /// </remarks>
-        /// <exception cref="ArgumentException">The options have no <see cref="JsonSerializerOptions.TypeInfoResolver"/>
-        /// and reflection-based serialization is off, so they could not write any request.</exception>
+        /// <exception cref="ArgumentException">The options cannot write <see cref="PostmarkMessage"/>: they have no
+        /// <see cref="JsonSerializerOptions.TypeInfoResolver"/> while reflection-based serialization is off, or their
+        /// resolver does not cover the type.</exception>
         public static JsonSerializerOptions Request
         {
             get => _request;
-            set => _request = value == null ? ReadOnly(CreateDefaultRequest()) : RequireResolver(value, nameof(Request));
+            set => _request = value == null
+                ? ReadOnly(CreateDefaultRequest())
+                : RequireResolverFor(typeof(PostmarkMessage), value, nameof(Request));
         }
 
         /// <summary>
@@ -79,13 +89,18 @@ namespace PostmarkDotNet
             return options;
         }
 
-        private static JsonSerializerOptions RequireResolver(JsonSerializerOptions options, string propertyName)
+        private static JsonSerializerOptions RequireResolverFor(Type postmarkType, JsonSerializerOptions options, string propertyName)
         {
-            if (options.TypeInfoResolver == null && !JsonSerializer.IsReflectionEnabledByDefault)
+            var resolver = options.TypeInfoResolver;
+            var canResolve = resolver == null
+                ? JsonSerializer.IsReflectionEnabledByDefault
+                : resolver.GetTypeInfo(postmarkType, options) != null;
+            if (!canResolve)
             {
                 throw new ArgumentException(
-                    propertyName + " needs a TypeInfoResolver, because reflection-based serialization is disabled in this app.",
-                    propertyName);
+                    propertyName + " cannot handle " + postmarkType.Name + ". Use a TypeInfoResolver that covers the Postmark types, "
+                    + "for example by starting from CreateDefault" + propertyName + "().",
+                    "value");
             }
             return options;
         }

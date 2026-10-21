@@ -8,7 +8,7 @@
     <PackageId>CloudPaperGroup.PostmarkDotNet</PackageId>
     <AssemblyName>Postmark</AssemblyName>
     <Version>1.0.0</Version>
-    <Company>CloudPaperGroup</Company>
+    <Company>Cloud Paper Group Pty Ltd</Company>
     <Authors>ActiveCampaign; CloudPaperGroup</Authors>
     <Copyright>Copyright (c) 2012 ActiveCampaign. Changes copyright (c) 2026 Cloud Paper Group Pty Ltd.</Copyright>
     <Description>CloudPaperGroup's fork of ActiveCampaign's Postmark.NET library (MIT), based on Postmark.NET 5.4.1. Not an official Postmark package.</Description>

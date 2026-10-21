@@ -12,6 +12,10 @@
 > (`PostmarkJsonOptions.Response` and `PostmarkJsonOptions.Request`),
 > and the defaults work in apps that turn reflection-based System.Text.Json off
 > (`JsonSerializerIsReflectionEnabledByDefault=false`).
+>
+> The defaults cover only the calls that the client makes. If your app reads the webhook
+> models (`PostmarkDotNet.Webhooks`) itself with reflection off, pass options that have a
+> resolver, for example `PostmarkJsonOptions.CreateDefaultResponse()`.
 
 The .NET client for [Postmark](https://postmarkapp.com). Postmark helps
 you deliver and track transactional and broadcast email for your applications,
@@ -24,7 +28,7 @@ Get a free API token at https://postmarkapp.com.
 ## Installation
 
 ```
-dotnet add package CloudPaperGroup.PostmarkDotNet --version 1.0.0
+dotnet add package CloudPaperGroup.PostmarkDotNet
 ```
 
 ## Quick start
@@ -52,7 +56,14 @@ sending email, using the bounce API, templates, and additional options.
 
 ## What's New
 
-### 5.4.1
+### 1.0.0 (CloudPaperGroup fork, based on upstream 5.4.1)
+
+- Added `PostmarkJsonOptions`: the JSON serializer options that the client uses for responses
+  and request bodies. The defaults set `DefaultJsonTypeInfoResolver`, so the client works in
+  apps that turn reflection-based System.Text.Json off. You can replace the options, for
+  example with a source-generated resolver.
+
+### 5.4.1 (upstream)
 
 - Added missing webhook payload models for type-safe deserialization of incoming
   webhook requests:
@@ -63,17 +74,18 @@ sending email, using the bounce API, templates, and additional options.
   These join the existing `PostmarkBounceWebhookMessage`, `PostmarkDeliveryWebhookMessage`,
   `PostmarkOpenWebhookMessage`, and `PostmarkInboundWebhookMessage`.
 
-### 5.4.0
+### 5.4.0 (upstream)
 
 - Added Bulk Email API support: `SendBulkEmailAsync` (`POST /email/bulk`) and
   `GetBulkEmailStatusAsync` (`GET /email/bulk/{id}`) for broadcast/marketing sends.
 
 ## Links
 
-- [Source & issues](https://github.com/ActiveCampaign/postmark-dotnet)
+- [Source & issues for this fork](https://github.com/CloudPaperGroup/postmark-dotnet)
+- [Upstream source](https://github.com/ActiveCampaign/postmark-dotnet)
 - [Documentation wiki](https://github.com/ActiveCampaign/postmark-dotnet/wiki)
 - [Postmark API reference](https://postmarkapp.com/developer)
 
 ## License
 
-Licensed under the [MIT](https://github.com/ActiveCampaign/postmark-dotnet/blob/main/LICENSE) license.
+Licensed under the [MIT](https://github.com/CloudPaperGroup/postmark-dotnet/blob/main/LICENSE) license.
