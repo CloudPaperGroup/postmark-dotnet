@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Postmark.Exceptions;
 
@@ -45,10 +46,25 @@ namespace PostmarkDotNet
         /// </summary>
         /// <param name="apiBaseUri"></param>
         /// <param name="requestTimeoutInSeconds"></param>
-        public PostmarkClientBase(string apiBaseUri = "https://api.postmarkapp.com")
+        /// <param name="responseSerializerOptions">Optional. The JSON options used to read API responses. Leave it null for
+        /// the defaults; see <see cref="PostmarkJsonOptions.CreateDefaultResponse"/>. Exists only in the CloudPaperGroup fork.</param>
+        /// <param name="requestSerializerOptions">Optional. The JSON options used to write request bodies. Leave it null for
+        /// the defaults; see <see cref="PostmarkJsonOptions.CreateDefaultRequest"/>. Exists only in the CloudPaperGroup fork.</param>
+        /// <exception cref="System.InvalidOperationException">Options with no resolver while reflection-based
+        /// serialization is off. The options you pass become read-only.</exception>
+        public PostmarkClientBase(string apiBaseUri = "https://api.postmarkapp.com",
+            JsonSerializerOptions responseSerializerOptions = null, JsonSerializerOptions requestSerializerOptions = null)
         {
             baseUri = new Uri(apiBaseUri);
+            _responseSerializerOptions = responseSerializerOptions ?? PostmarkJsonOptions.DefaultResponse;
+            _responseSerializerOptions.MakeReadOnly(populateMissingResolver: true);
+            _requestSerializerOptions = requestSerializerOptions ?? PostmarkJsonOptions.DefaultRequest;
+            _requestSerializerOptions.MakeReadOnly(populateMissingResolver: true);
         }
+
+        private readonly JsonSerializerOptions _responseSerializerOptions;
+
+        private readonly JsonSerializerOptions _requestSerializerOptions;
 
         protected abstract string AuthHeaderName { get; }
 
@@ -76,7 +92,7 @@ namespace PostmarkDotNet
             //set a body for this request.
             if (message != null)
             {
-                var content = new JsonContent<TRequestBody>(message);
+                var content = new JsonContent<TRequestBody>(message, _requestSerializerOptions);
                 request.Content = content;
             }
 
@@ -88,13 +104,13 @@ namespace PostmarkDotNet
 
             var body = await result.Content.ReadAsStringAsync();
 
-            if (JsonExtensions.TryDeserializeObject<TResponse>(body, out TResponse parsedResponse) 
+            if (JsonExtensions.TryDeserializeObject<TResponse>(body, _responseSerializerOptions, out TResponse parsedResponse) 
                 && result.StatusCode == HttpStatusCode.OK)
             {
                 return parsedResponse;
             }
 
-            if (!JsonExtensions.TryDeserializeObject<PostmarkResponse>(body, out PostmarkResponse error))
+            if (!JsonExtensions.TryDeserializeObject<PostmarkResponse>(body, _responseSerializerOptions, out PostmarkResponse error))
             {
                 throw new PostmarkResponseException("The response from the API could not be parsed.", body);
             }

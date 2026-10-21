@@ -1,10 +1,30 @@
-<a href="https://postmarkapp.com">
-    <img src="postmark-logo.png" alt="Postmark Logo" title="Postmark" width="120" height="120" align="right">
-</a>
+# Postmark .NET (CloudPaperGroup fork)
 
-# Postmark .NET
-
-[![Build Status](https://circleci.com/gh/wildbit/postmark-dotnet.svg?style=shield)](https://circleci.com/gh/wildbit/postmark-dotnet)
+> **This is not an official Postmark repository.** It is CloudPaperGroup's fork of
+> [ActiveCampaign/postmark-dotnet](https://github.com/ActiveCampaign/postmark-dotnet) (MIT),
+> published to NuGet as `CloudPaperGroup.PostmarkDotNet`. The API, namespaces and assembly
+> name match the official `Postmark` package, so switching back needs only a package reference change,
+> as long as your code does not use the additions below. They exist only in this fork.
+>
+> **What the fork adds:** the client constructors take optional JSON serializer options
+> (`responseSerializerOptions` and `requestSerializerOptions`), and `PostmarkJsonOptions` gives
+> copies of the defaults. The defaults work in apps that turn reflection-based System.Text.Json off
+> (`JsonSerializerIsReflectionEnabledByDefault=false`).
+>
+> **Versions:** the first three numbers are the upstream release that the fork is based on, and the fourth
+> number counts our changes on top of it. 5.4.1.1 is upstream 5.4.1 with JsonFix. Our next change on the same
+> base is 5.4.1.2. After you merge upstream 5.5.0, the version is 5.5.0.1. Keep the upstream version in the
+> package `<Description>` the same as the first three numbers.
+>
+> **Tests:** each pull request runs the unit tests (`dotnet test src/Postmark.Tests --filter "Category!=Integration"`).
+> The integration tests call the live Postmark API. To run them, put the tokens that
+> `ClientBaseFixture.cs` lists in a `testing_keys.json` file (git ignores it).
+>
+> **Releasing:** bump `<Version>` in `src/Postmark/Postmark.csproj` in your pull request. A merge to `main`
+> publishes to the org's GitHub Packages feed. An Engineering team member then approves the `release`
+> deployment to publish the same package to nuget.org.
+>
+> The rest of this file is the upstream README.
 
 ## Leave transactional email delivery to the experts
 

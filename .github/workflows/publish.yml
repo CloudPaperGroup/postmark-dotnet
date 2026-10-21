@@ -1,0 +1,109 @@
+name: Publish
+
+# On every merge to main: pack the <Version> in Postmark.csproj and push it to the org's GitHub
+# Packages feed. When that version is not on nuget.org yet, the nuget-org job waits for an Engineering team member
+# to approve the `release` environment, then pushes the same file there. A merge with an old version asks no one.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      publish-nuget: ${{ steps.nuget.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            10.0.x
+      - name: Read the version
+        id: version
+        run: echo "version=$(dotnet msbuild src/Postmark/Postmark.csproj -getProperty:Version)" >> "$GITHUB_OUTPUT"
+      - name: Is this version already on nuget.org?
+        id: nuget
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          versions=$(curl -fsS https://api.nuget.org/v3-flatcontainer/cloudpapergroup.postmarkdotnet/index.json || echo '{"versions":[]}')
+          if echo "$versions" | grep -qiF "\"$VERSION\""; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "$VERSION is already on nuget.org; nothing to release."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: What a nuget.org approval would release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PUBLISH: ${{ steps.nuget.outputs.publish }}
+        run: |
+          echo "### CloudPaperGroup.PostmarkDotNet $VERSION" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$PUBLISH" = "true" ]; then
+            echo "This version is not on nuget.org yet. The nuget-org job asks for an approval." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "This version is already on nuget.org. The nuget-org job is skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Pack
+        run: dotnet pack src/Postmark/Postmark.csproj -c Release -o out
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nupkg
+          path: out/*.nupkg
+          if-no-files-found: error
+
+  github-packages:
+    needs: pack
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            10.0.x
+      - uses: actions/download-artifact@v8
+        with:
+          name: nupkg
+          path: out
+      - name: Push to GitHub Packages
+        env:
+          GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FEED: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+        run: dotnet nuget push "out/*.nupkg" --api-key "$GITHUB_PACKAGES_TOKEN" --source "$FEED" --skip-duplicate
+
+  nuget-org:
+    needs: [pack, github-packages]
+    # Skipped (so no approval request) when the version is already on nuget.org, or before NUGET_USER is set up.
+    if: needs.pack.outputs.publish-nuget == 'true' && vars.NUGET_USER != ''
+    runs-on: ubuntu-latest
+    # Engineering are the required reviewers on this environment. The nuget.org trusted publishing policy trusts
+    # only this workflow in this environment, so we store no long-lived key anywhere.
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            10.0.x
+      - uses: actions/download-artifact@v8
+        with:
+          name: nupkg
+          path: out
+      - name: NuGet Trusted Publishing login
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+      - name: Push to nuget.org
+        env:
+          NUGET_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: dotnet nuget push "out/*.nupkg" --api-key "$NUGET_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate

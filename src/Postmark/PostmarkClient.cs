@@ -33,8 +33,15 @@ namespace PostmarkDotNet
         /// </summary>
         /// <param name="apiBaseUri">The base uri to use when connecting to Postmark. You should rarely need to modify this, except if you want to disable TLS (not recommended), or you are using a proxy of some sort to connect to the API.</param>
         /// <param name="serverToken">Used for requests that require server level privileges. This token can be found on the Credentials tab under your Postmark server.</param>
-        public PostmarkClient(string serverToken, string apiBaseUri = "https://api.postmarkapp.com")
-            : base(apiBaseUri)
+        /// <param name="responseSerializerOptions">Optional. The JSON options used to read API responses. Leave it null for
+        /// the defaults; see <see cref="PostmarkJsonOptions.CreateDefaultResponse"/>. Exists only in the CloudPaperGroup fork.</param>
+        /// <param name="requestSerializerOptions">Optional. The JSON options used to write request bodies. Leave it null for
+        /// the defaults; see <see cref="PostmarkJsonOptions.CreateDefaultRequest"/>. Exists only in the CloudPaperGroup fork.</param>
+        /// <exception cref="System.InvalidOperationException">Options with no resolver while reflection-based
+        /// serialization is off. The options you pass become read-only.</exception>
+        public PostmarkClient(string serverToken, string apiBaseUri = "https://api.postmarkapp.com",
+            JsonSerializerOptions responseSerializerOptions = null, JsonSerializerOptions requestSerializerOptions = null)
+            : base(apiBaseUri, responseSerializerOptions, requestSerializerOptions)
         {
             _authToken = serverToken;
         }

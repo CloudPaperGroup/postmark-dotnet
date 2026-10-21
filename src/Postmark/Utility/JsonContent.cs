@@ -1,5 +1,4 @@
-﻿using PostmarkDotNet.Converters;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 
@@ -10,14 +9,8 @@ namespace PostmarkDotNet.Utility
     /// </summary>
     internal class JsonContent<T> : StringContent
     {
-        private static JsonSerializerOptions _settings = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Converters = { new UnicodeJsonStringConverter() }
-        };
-
-        internal JsonContent(T content) :
-            base(JsonSerializer.Serialize(content, _settings),
+        internal JsonContent(T content, JsonSerializerOptions options) :
+            base(JsonSerializer.Serialize(content, options),
             Encoding.UTF8, "application/json")
         {
         }
