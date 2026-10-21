@@ -24,7 +24,7 @@ Get a free API token at https://postmarkapp.com.
 ## Installation
 
 ```
-dotnet add package CloudPaperGroup.PostmarkDotNet --version 5.4.1-cpg.1
+dotnet add package CloudPaperGroup.PostmarkDotNet --version 1.0.0
 ```
 
 ## Quick start

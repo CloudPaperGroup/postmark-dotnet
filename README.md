@@ -11,6 +11,10 @@
 > that work in apps that turn reflection-based System.Text.Json off
 > (`JsonSerializerIsReflectionEnabledByDefault=false`).
 >
+> **Versions:** the fork has its own version numbers (1.0.0 is based on upstream 5.4.1). Use a patch for a fix,
+> a minor for a new feature and a major for a breaking change. When you merge a new upstream release, say
+> which one in the package `<Description>`.
+>
 > **Releasing:** bump `<Version>` in `src/Postmark/Postmark.csproj` in your pull request. A merge to `main`
 > publishes to the org's GitHub Packages feed. An Engineering team member then approves the `release`
 > deployment to publish the same package to nuget.org.
