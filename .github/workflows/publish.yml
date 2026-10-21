@@ -89,7 +89,7 @@ jobs:
         with:
           name: nupkg
           path: out
-      - name: NuGet login (OIDC to a one-hour API key)
+      - name: NuGet Trusted Publishing login
         id: login
         uses: NuGet/login@v1
         with:
