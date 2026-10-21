@@ -11,9 +11,10 @@
 > copies of the defaults. The defaults work in apps that turn reflection-based System.Text.Json off
 > (`JsonSerializerIsReflectionEnabledByDefault=false`).
 >
-> **Versions:** the fork has its own version numbers (1.0.0 is based on upstream 5.4.1). Use a patch for a fix,
-> a minor for a new feature and a major for a breaking change. When you merge a new upstream release, say
-> which one in the package `<Description>`.
+> **Versions:** the first three numbers are the upstream release that the fork is based on, and the fourth
+> number counts our changes on top of it. 5.4.1.1 is upstream 5.4.1 with JsonFix. Our next change on the same
+> base is 5.4.1.2. After you merge upstream 5.5.0, the version is 5.5.0.1. Keep the upstream version in the
+> package `<Description>` the same as the first three numbers.
 >
 > **Tests:** each pull request runs the unit tests (`dotnet test src/Postmark.Tests --filter "Category!=Integration"`).
 > The integration tests call the live Postmark API. To run them, put the tokens that

@@ -57,7 +57,7 @@ sending email, using the bounce API, templates, and additional options.
 
 ## What's New
 
-### 1.0.0 (CloudPaperGroup fork, based on upstream 5.4.1)
+### 5.4.1.1 (CloudPaperGroup fork: upstream 5.4.1 with JsonFix)
 
 - The client constructors take optional `responseSerializerOptions` and `requestSerializerOptions`.
   The defaults set `DefaultJsonTypeInfoResolver`, so the client works in apps that turn

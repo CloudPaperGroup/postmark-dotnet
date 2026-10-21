@@ -7,11 +7,11 @@
     <RepositoryType>git</RepositoryType>
     <PackageId>CloudPaperGroup.PostmarkDotNet</PackageId>
     <AssemblyName>Postmark</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>5.4.1.1</Version>
     <Company>Cloud Paper Group Pty Ltd</Company>
     <Authors>ActiveCampaign; CloudPaperGroup</Authors>
     <Copyright>Copyright (c) 2012 ActiveCampaign. Changes copyright (c) 2026 Cloud Paper Group Pty Ltd.</Copyright>
-    <Description>CloudPaperGroup's fork of ActiveCampaign's Postmark.NET library (MIT), based on Postmark.NET 5.4.1. Not an official Postmark package.</Description>
+    <Description>CloudPaperGroup fork of Postmark.NET 5.4.1 with JsonFix: works in apps that turn reflection-based System.Text.Json off. Based on ActiveCampaign's Postmark.NET library (MIT). Not an official Postmark package.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <LangVersion>latest</LangVersion>
