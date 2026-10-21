@@ -24,7 +24,8 @@ jobs:
         with:
           dotnet-version: |
             10.0.x
-      - id: version
+      - name: Read the version
+        id: version
         run: echo "version=$(dotnet msbuild src/Postmark/Postmark.csproj -getProperty:Version)" >> "$GITHUB_OUTPUT"
       - name: Is this version already on nuget.org?
         id: nuget
@@ -50,7 +51,8 @@ jobs:
           else
             echo "This version is already on nuget.org. The nuget-org job is skipped." >> "$GITHUB_STEP_SUMMARY"
           fi
-      - run: dotnet pack src/Postmark/Postmark.csproj -c Release -o out
+      - name: Pack
+        run: dotnet pack src/Postmark/Postmark.csproj -c Release -o out
       - uses: actions/upload-artifact@v7
         with:
           name: nupkg
@@ -71,7 +73,8 @@ jobs:
         with:
           name: nupkg
           path: out
-      - env:
+      - name: Push to GitHub Packages
+        env:
           GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FEED: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
         run: dotnet nuget push "out/*.nupkg" --api-key "$GITHUB_PACKAGES_TOKEN" --source "$FEED" --skip-duplicate
@@ -100,6 +103,7 @@ jobs:
         uses: NuGet/login@v1
         with:
           user: ${{ vars.NUGET_USER }}
-      - env:
+      - name: Push to nuget.org
+        env:
           NUGET_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: dotnet nuget push "out/*.nupkg" --api-key "$NUGET_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate

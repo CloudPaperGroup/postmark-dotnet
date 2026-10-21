@@ -40,4 +40,5 @@ jobs:
           echo "Version $base_version -> $head_version"
       - name: Unit tests
         run: dotnet test src/Postmark.Tests/Postmark.Tests.csproj -c Release --filter "Category!=Integration"
-      - run: dotnet pack src/Postmark/Postmark.csproj -c Release -o out
+      - name: Pack
+        run: dotnet pack src/Postmark/Postmark.csproj -c Release -o out
