@@ -2,13 +2,17 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyTitle>PostmarkDotNet</AssemblyTitle>
-    <PackageProjectUrl>https://github.com/wildbit/postmark-dotnet/wiki</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/CloudPaperGroup/postmark-dotnet</PackageProjectUrl>
     <PackageIconUrl>https://github.com/wildbit/postmark-dotnet/raw/master/postmark-logo.png</PackageIconUrl>
-    <RepositoryUrl>https://github.com/wildbit/postmark-dotnet.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/CloudPaperGroup/postmark-dotnet.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <Version>5.4.1</Version>
-    <Company>Wildbit, LLC.</Company>
-    <Description>The official .net client for Postmark.</Description>
+    <PackageId>CloudPaperGroup.PostmarkDotNet</PackageId>
+    <AssemblyName>Postmark</AssemblyName>
+    <Version>5.4.1-cpg.1</Version>
+    <Company>CloudPaperGroup</Company>
+    <Authors>ActiveCampaign; CloudPaperGroup</Authors>
+    <Copyright>Copyright (c) 2012 ActiveCampaign</Copyright>
+    <Description>CloudPaperGroup's fork of ActiveCampaign's Postmark.NET library (MIT). Not an official Postmark package.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <LangVersion>latest</LangVersion>
@@ -20,5 +24,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

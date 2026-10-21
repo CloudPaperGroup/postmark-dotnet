@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using Postmark.Exceptions;
 
@@ -15,7 +17,7 @@ namespace PostmarkDotNet
     /// </summary>
     public abstract class PostmarkClientBase
     {
-        private static Lazy<ISimpleHttpClient> _staticClient = 
+        private static Lazy<ISimpleHttpClient> _staticClient =
             new Lazy<ISimpleHttpClient>(()=>new SimpleHttpClient()) ;
 
         /// <summary>
@@ -27,6 +29,62 @@ namespace PostmarkDotNet
         /// (for tests).
         /// </remarks>
         public static Func<ISimpleHttpClient> ClientFactory {get;set;} = () => _staticClient.Value;
+
+        private static JsonSerializerOptions _responseSerializerOptions = CreateDefaultResponseSerializerOptions();
+        private static JsonSerializerOptions _requestSerializerOptions = CreateDefaultRequestSerializerOptions();
+
+        /// <summary>
+        /// The serializer options used to read every API response.
+        /// </summary>
+        /// <remarks>
+        /// The default sets <see cref="DefaultJsonTypeInfoResolver"/> explicitly, so responses still read when the
+        /// host app turns reflection-based serialization off by default
+        /// (<c>JsonSerializerIsReflectionEnabledByDefault=false</c>). Replace it to supply your own resolver, for example
+        /// a source-generated context; start from <see cref="CreateDefaultResponseSerializerOptions"/> to keep the
+        /// converters the API's date and string formats need. Setting <c>null</c> restores the default.
+        /// </remarks>
+        public static JsonSerializerOptions ResponseSerializerOptions
+        {
+            get => _responseSerializerOptions;
+            set => _responseSerializerOptions = value ?? CreateDefaultResponseSerializerOptions();
+        }
+
+        /// <summary>
+        /// The serializer options used to write every request body.
+        /// </summary>
+        /// <remarks>
+        /// The default sets <see cref="DefaultJsonTypeInfoResolver"/> explicitly, for the same reason as
+        /// <see cref="ResponseSerializerOptions"/>. Start from <see cref="CreateDefaultRequestSerializerOptions"/> to keep
+        /// the string escaping the API expects. Setting <c>null</c> restores the default.
+        /// </remarks>
+        public static JsonSerializerOptions RequestSerializerOptions
+        {
+            get => _requestSerializerOptions;
+            set => _requestSerializerOptions = value ?? CreateDefaultRequestSerializerOptions();
+        }
+
+        /// <summary>
+        /// Creates a new copy of the default <see cref="ResponseSerializerOptions"/>.
+        /// </summary>
+        public static JsonSerializerOptions CreateDefaultResponseSerializerOptions() => new JsonSerializerOptions
+        {
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
+            Converters =
+            {
+                new UnicodeJsonStringConverter(),
+                new DateTimeConverter()
+            }
+        };
+
+        /// <summary>
+        /// Creates a new copy of the default <see cref="RequestSerializerOptions"/>.
+        /// </summary>
+        public static JsonSerializerOptions CreateDefaultRequestSerializerOptions() => new JsonSerializerOptions
+        {
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
+            WriteIndented = true,
+            Converters = { new UnicodeJsonStringConverter() }
+        };
 
         protected static readonly string DATE_FORMAT = "yyyy-MM-dd";
 
@@ -76,7 +134,7 @@ namespace PostmarkDotNet
             //set a body for this request.
             if (message != null)
             {
-                var content = new JsonContent<TRequestBody>(message);
+                var content = new JsonContent<TRequestBody>(message, RequestSerializerOptions);
                 request.Content = content;
             }
 
@@ -88,13 +146,15 @@ namespace PostmarkDotNet
 
             var body = await result.Content.ReadAsStringAsync();
 
-            if (JsonExtensions.TryDeserializeObject<TResponse>(body, out TResponse parsedResponse) 
+            var options = ResponseSerializerOptions;
+
+            if (JsonExtensions.TryDeserializeObject<TResponse>(body, options, out TResponse parsedResponse)
                 && result.StatusCode == HttpStatusCode.OK)
             {
                 return parsedResponse;
             }
 
-            if (!JsonExtensions.TryDeserializeObject<PostmarkResponse>(body, out PostmarkResponse error))
+            if (!JsonExtensions.TryDeserializeObject<PostmarkResponse>(body, options, out PostmarkResponse error))
             {
                 throw new PostmarkResponseException("The response from the API could not be parsed.", body);
             }

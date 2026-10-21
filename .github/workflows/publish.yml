@@ -1,0 +1,63 @@
+name: Publish
+
+# On every merge to main: pack the version in Postmark.csproj and push it to the org's GitHub Packages feed.
+# The nuget-org job then waits for an Engineering team member to approve the `release` environment, and pushes
+# the same file to nuget.org. Bump <Version> in the PR; a merge that keeps the old version is a no-op.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: |
+            10.0.x
+      - run: dotnet pack src/Postmark/Postmark.csproj -c Release -o out
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: nupkg
+          path: out/*.nupkg
+          if-no-files-found: error
+
+  github-packages:
+    needs: pack
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: nupkg
+          path: out
+      - run: dotnet nuget push "out/*.nupkg" --api-key "${{ secrets.GITHUB_TOKEN }}" --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --skip-duplicate
+
+  nuget-org:
+    needs: github-packages
+    runs-on: ubuntu-latest
+    # The Engineering team are the required reviewers on this environment, so this job waits for one of them
+    # to approve it. The nuget.org trusted publishing policy trusts only this workflow in this environment.
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: nupkg
+          path: out
+      - name: NuGet login (OIDC to a one-hour API key)
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+      - run: dotnet nuget push "out/*.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

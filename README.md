@@ -2,9 +2,19 @@
     <img src="postmark-logo.png" alt="Postmark Logo" title="Postmark" width="120" height="120" align="right">
 </a>
 
-# Postmark .NET
+# Postmark .NET (CloudPaperGroup fork)
 
-[![Build Status](https://circleci.com/gh/wildbit/postmark-dotnet.svg?style=shield)](https://circleci.com/gh/wildbit/postmark-dotnet)
+> **This is not an official Postmark repository.** It is CloudPaperGroup's fork of
+> [ActiveCampaign/postmark-dotnet](https://github.com/ActiveCampaign/postmark-dotnet) (MIT),
+> published to NuGet as `CloudPaperGroup.PostmarkDotNet`. The API, namespaces and assembly
+> name match the official `Postmark` package, so switching back needs only a package reference change.
+>
+> **What the fork adds:** replaceable JSON serializer options
+> (`PostmarkClientBase.ResponseSerializerOptions` and `RequestSerializerOptions`), with defaults
+> that work in apps that turn reflection-based System.Text.Json off
+> (`JsonSerializerIsReflectionEnabledByDefault=false`).
+>
+> The rest of this file is the upstream README.
 
 ## Leave transactional email delivery to the experts
 

@@ -1,6 +1,17 @@
-# Postmark .NET
+# Postmark .NET (CloudPaperGroup fork)
 
-The official .NET client for [Postmark](https://postmarkapp.com). Postmark helps
+> **This is not an official Postmark package.** It is CloudPaperGroup's fork of
+> [ActiveCampaign/postmark-dotnet](https://github.com/ActiveCampaign/postmark-dotnet),
+> published as `CloudPaperGroup.PostmarkDotNet`. The API, the namespaces and the
+> assembly name are the same as the official `Postmark` package, so you can switch
+> between the two by changing only the package reference.
+>
+> **What the fork adds:** the client's JSON serializer options can be replaced
+> (`PostmarkClientBase.ResponseSerializerOptions` and `RequestSerializerOptions`),
+> and the defaults work in apps that turn reflection-based System.Text.Json off
+> (`JsonSerializerIsReflectionEnabledByDefault=false`).
+
+The .NET client for [Postmark](https://postmarkapp.com). Postmark helps
 you deliver and track transactional and broadcast email for your applications,
 replacing SMTP with a reliable, scalable HTTP API. This package wraps the
 Postmark API so you can send email, manage templates, read bounces, configure
@@ -11,7 +22,7 @@ Get a free API token at https://postmarkapp.com.
 ## Installation
 
 ```
-dotnet add package PostmarkDotNet
+dotnet add package CloudPaperGroup.PostmarkDotNet
 ```
 
 ## Quick start
