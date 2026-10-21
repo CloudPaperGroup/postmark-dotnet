@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Postmark.Exceptions;
 
@@ -95,14 +94,9 @@ namespace PostmarkDotNet
                 return parsedResponse;
             }
 
-            PostmarkResponse error;
-            try
+            if (!JsonExtensions.TryDeserializeObject<PostmarkResponse>(body, PostmarkJsonOptions.Response, out PostmarkResponse error))
             {
-                error = JsonSerializer.Deserialize<PostmarkResponse>(body, PostmarkJsonOptions.Response);
-            }
-            catch (Exception ex)
-            {
-                throw new PostmarkResponseException("The response from the API could not be parsed.", body, ex);
+                throw new PostmarkResponseException("The response from the API could not be parsed.", body);
             }
 
             switch ((int) result.StatusCode)
