@@ -4,7 +4,9 @@
 > [ActiveCampaign/postmark-dotnet](https://github.com/ActiveCampaign/postmark-dotnet),
 > published as `CloudPaperGroup.PostmarkDotNet`. The API, the namespaces and the
 > assembly name are the same as the official `Postmark` package, so you can switch
-> between the two by changing only the package reference.
+> between the two by changing only the package reference, as long as your code does not
+> use the two settings below (they exist only in this fork). Do not reference both
+> packages: they contain the same `Postmark.dll`.
 >
 > **What the fork adds:** the client's JSON serializer options can be replaced
 > (`PostmarkClientBase.ResponseSerializerOptions` and `RequestSerializerOptions`),
@@ -22,7 +24,7 @@ Get a free API token at https://postmarkapp.com.
 ## Installation
 
 ```
-dotnet add package CloudPaperGroup.PostmarkDotNet
+dotnet add package CloudPaperGroup.PostmarkDotNet --version 5.4.1-cpg.1
 ```
 
 ## Quick start

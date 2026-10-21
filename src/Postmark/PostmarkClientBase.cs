@@ -30,8 +30,8 @@ namespace PostmarkDotNet
         /// </remarks>
         public static Func<ISimpleHttpClient> ClientFactory {get;set;} = () => _staticClient.Value;
 
-        private static JsonSerializerOptions _responseSerializerOptions = CreateDefaultResponseSerializerOptions();
-        private static JsonSerializerOptions _requestSerializerOptions = CreateDefaultRequestSerializerOptions();
+        private static JsonSerializerOptions _responseSerializerOptions = ReadOnly(CreateDefaultResponseSerializerOptions());
+        private static JsonSerializerOptions _requestSerializerOptions = ReadOnly(CreateDefaultRequestSerializerOptions());
 
         /// <summary>
         /// The serializer options used to read every API response.
@@ -39,14 +39,20 @@ namespace PostmarkDotNet
         /// <remarks>
         /// The default sets <see cref="DefaultJsonTypeInfoResolver"/> explicitly, so responses still read when the
         /// host app turns reflection-based serialization off by default
-        /// (<c>JsonSerializerIsReflectionEnabledByDefault=false</c>). Replace it to supply your own resolver, for example
-        /// a source-generated context; start from <see cref="CreateDefaultResponseSerializerOptions"/> to keep the
-        /// converters the API's date and string formats need. Setting <c>null</c> restores the default.
+        /// (<c>JsonSerializerIsReflectionEnabledByDefault=false</c>). The default is read-only: to change it, assign new
+        /// options, starting from <see cref="CreateDefaultResponseSerializerOptions"/> to keep the converters the API's
+        /// date and string formats need. A source-generated resolver must cover <see cref="PostmarkResponse"/> and every
+        /// response type the client reads. Setting <c>null</c> restores the default. Do not share the instance you assign
+        /// with other code: the first call makes it read-only.
         /// </remarks>
+        /// <exception cref="ArgumentException">The options have no <see cref="JsonSerializerOptions.TypeInfoResolver"/>
+        /// and reflection-based serialization is off, so they could not read any response.</exception>
         public static JsonSerializerOptions ResponseSerializerOptions
         {
             get => _responseSerializerOptions;
-            set => _responseSerializerOptions = value ?? CreateDefaultResponseSerializerOptions();
+            set => _responseSerializerOptions = value == null
+                ? ReadOnly(CreateDefaultResponseSerializerOptions())
+                : RequireResolver(value, nameof(ResponseSerializerOptions));
         }
 
         /// <summary>
@@ -54,13 +60,35 @@ namespace PostmarkDotNet
         /// </summary>
         /// <remarks>
         /// The default sets <see cref="DefaultJsonTypeInfoResolver"/> explicitly, for the same reason as
-        /// <see cref="ResponseSerializerOptions"/>. Start from <see cref="CreateDefaultRequestSerializerOptions"/> to keep
-        /// the string escaping the API expects. Setting <c>null</c> restores the default.
+        /// <see cref="ResponseSerializerOptions"/>, and is read-only. Start from
+        /// <see cref="CreateDefaultRequestSerializerOptions"/> to keep the string escaping the API expects. Setting
+        /// <c>null</c> restores the default. Do not share the instance you assign with other code.
         /// </remarks>
+        /// <exception cref="ArgumentException">The options have no <see cref="JsonSerializerOptions.TypeInfoResolver"/>
+        /// and reflection-based serialization is off, so they could not write any request.</exception>
         public static JsonSerializerOptions RequestSerializerOptions
         {
             get => _requestSerializerOptions;
-            set => _requestSerializerOptions = value ?? CreateDefaultRequestSerializerOptions();
+            set => _requestSerializerOptions = value == null
+                ? ReadOnly(CreateDefaultRequestSerializerOptions())
+                : RequireResolver(value, nameof(RequestSerializerOptions));
+        }
+
+        private static JsonSerializerOptions ReadOnly(JsonSerializerOptions options)
+        {
+            options.MakeReadOnly();
+            return options;
+        }
+
+        private static JsonSerializerOptions RequireResolver(JsonSerializerOptions options, string propertyName)
+        {
+            if (options.TypeInfoResolver == null && !JsonSerializer.IsReflectionEnabledByDefault)
+            {
+                throw new ArgumentException(
+                    propertyName + " needs a TypeInfoResolver, because reflection-based serialization is disabled in this app.",
+                    propertyName);
+            }
+            return options;
         }
 
         /// <summary>
@@ -148,15 +176,15 @@ namespace PostmarkDotNet
 
             var options = ResponseSerializerOptions;
 
-            if (JsonExtensions.TryDeserializeObject<TResponse>(body, options, out TResponse parsedResponse)
+            if (JsonExtensions.TryDeserializeObject<TResponse>(body, options, out TResponse parsedResponse, out _)
                 && result.StatusCode == HttpStatusCode.OK)
             {
                 return parsedResponse;
             }
 
-            if (!JsonExtensions.TryDeserializeObject<PostmarkResponse>(body, options, out PostmarkResponse error))
+            if (!JsonExtensions.TryDeserializeObject<PostmarkResponse>(body, options, out PostmarkResponse error, out var parseFailure))
             {
-                throw new PostmarkResponseException("The response from the API could not be parsed.", body);
+                throw new PostmarkResponseException("The response from the API could not be parsed.", body, parseFailure);
             }
 
             switch ((int) result.StatusCode)

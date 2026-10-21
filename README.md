@@ -1,18 +1,19 @@
-<a href="https://postmarkapp.com">
-    <img src="postmark-logo.png" alt="Postmark Logo" title="Postmark" width="120" height="120" align="right">
-</a>
-
 # Postmark .NET (CloudPaperGroup fork)
 
 > **This is not an official Postmark repository.** It is CloudPaperGroup's fork of
 > [ActiveCampaign/postmark-dotnet](https://github.com/ActiveCampaign/postmark-dotnet) (MIT),
 > published to NuGet as `CloudPaperGroup.PostmarkDotNet`. The API, namespaces and assembly
-> name match the official `Postmark` package, so switching back needs only a package reference change.
+> name match the official `Postmark` package, so switching back needs only a package reference change,
+> as long as your code does not use the two settings below. They exist only in this fork.
 >
 > **What the fork adds:** replaceable JSON serializer options
 > (`PostmarkClientBase.ResponseSerializerOptions` and `RequestSerializerOptions`), with defaults
 > that work in apps that turn reflection-based System.Text.Json off
 > (`JsonSerializerIsReflectionEnabledByDefault=false`).
+>
+> **Releasing:** bump `<Version>` in `src/Postmark/Postmark.csproj` in your pull request. A merge to `main`
+> publishes to the org's GitHub Packages feed. An Engineering team member then approves the `release`
+> deployment to publish the same package to nuget.org.
 >
 > The rest of this file is the upstream README.
 
