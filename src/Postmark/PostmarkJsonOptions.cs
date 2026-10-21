@@ -17,8 +17,8 @@ namespace PostmarkDotNet
     /// </remarks>
     public static class PostmarkJsonOptions
     {
-        private static readonly JsonSerializerOptions DefaultResponse = ReadOnly(CreateDefaultResponse());
-        private static readonly JsonSerializerOptions DefaultRequest = ReadOnly(CreateDefaultRequest());
+        internal static readonly JsonSerializerOptions DefaultResponse = ReadOnly(CreateDefaultResponse());
+        internal static readonly JsonSerializerOptions DefaultRequest = ReadOnly(CreateDefaultRequest());
 
         /// <summary>
         /// Creates a new copy of the default options that a client uses to read API responses.
@@ -52,32 +52,9 @@ namespace PostmarkDotNet
             Converters = { new UnicodeJsonStringConverter() }
         };
 
-        internal static JsonSerializerOptions ResponseOrDefault(JsonSerializerOptions options, string parameterName) =>
-            options == null ? DefaultResponse : RequireResolverFor(typeof(PostmarkResponse), options, parameterName);
-
-        internal static JsonSerializerOptions RequestOrDefault(JsonSerializerOptions options, string parameterName) =>
-            options == null ? DefaultRequest : RequireResolverFor(typeof(PostmarkMessage), options, parameterName);
-
         private static JsonSerializerOptions ReadOnly(JsonSerializerOptions options)
         {
             options.MakeReadOnly();
-            return options;
-        }
-
-        private static JsonSerializerOptions RequireResolverFor(Type postmarkType, JsonSerializerOptions options, string parameterName)
-        {
-            var resolver = options.TypeInfoResolver;
-            var canResolve = resolver == null
-                ? JsonSerializer.IsReflectionEnabledByDefault
-                : resolver.GetTypeInfo(postmarkType, options) != null;
-            if (!canResolve)
-            {
-                throw new ArgumentException(
-                    parameterName + " cannot handle " + postmarkType.Name + ". Use a TypeInfoResolver that covers the "
-                    + "Postmark types, for example by starting from PostmarkJsonOptions.CreateDefault"
-                    + (postmarkType == typeof(PostmarkResponse) ? "Response" : "Request") + "().",
-                    parameterName);
-            }
             return options;
         }
     }

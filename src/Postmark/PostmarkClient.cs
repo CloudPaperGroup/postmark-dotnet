@@ -37,8 +37,8 @@ namespace PostmarkDotNet
         /// the defaults; see <see cref="PostmarkJsonOptions.CreateDefaultResponse"/>. Exists only in the CloudPaperGroup fork.</param>
         /// <param name="requestSerializerOptions">Optional. The JSON options used to write request bodies. Leave it null for
         /// the defaults; see <see cref="PostmarkJsonOptions.CreateDefaultRequest"/>. Exists only in the CloudPaperGroup fork.</param>
-        /// <exception cref="System.ArgumentException">Options that cannot read or write the Postmark types, for example
-        /// options with no resolver while reflection-based serialization is off.</exception>
+        /// <exception cref="System.InvalidOperationException">Options with no resolver while reflection-based
+        /// serialization is off. The options you pass become read-only.</exception>
         public PostmarkClient(string serverToken, string apiBaseUri = "https://api.postmarkapp.com",
             JsonSerializerOptions responseSerializerOptions = null, JsonSerializerOptions requestSerializerOptions = null)
             : base(apiBaseUri, responseSerializerOptions, requestSerializerOptions)
