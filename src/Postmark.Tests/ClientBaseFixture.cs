@@ -9,6 +9,7 @@ using System.Text.Json;
 
 namespace Postmark.Tests
 {
+    [Trait("Category", "Integration")]
     public abstract class ClientBaseFixture
     {
         private static string _assemblyLocation = typeof(ClientBaseFixture).GetTypeInfo().Assembly.Location;

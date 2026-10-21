@@ -15,6 +15,10 @@
 > a minor for a new feature and a major for a breaking change. When you merge a new upstream release, say
 > which one in the package `<Description>`.
 >
+> **Tests:** each pull request runs the unit tests (`dotnet test src/Postmark.Tests --filter "Category!=Integration"`).
+> The integration tests call the live Postmark API. To run them, put the tokens that
+> `ClientBaseFixture.cs` lists in a `testing_keys.json` file (git ignores it).
+>
 > **Releasing:** bump `<Version>` in `src/Postmark/Postmark.csproj` in your pull request. A merge to `main`
 > publishes to the org's GitHub Packages feed. An Engineering team member then approves the `release`
 > deployment to publish the same package to nuget.org.
