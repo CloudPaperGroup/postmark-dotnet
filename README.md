@@ -4,11 +4,11 @@
 > [ActiveCampaign/postmark-dotnet](https://github.com/ActiveCampaign/postmark-dotnet) (MIT),
 > published to NuGet as `CloudPaperGroup.PostmarkDotNet`. The API, namespaces and assembly
 > name match the official `Postmark` package, so switching back needs only a package reference change,
-> as long as your code does not use the two settings below. They exist only in this fork.
+> as long as your code does not use the additions below. They exist only in this fork.
 >
-> **What the fork adds:** replaceable JSON serializer options
-> (`PostmarkJsonOptions.Response` and `PostmarkJsonOptions.Request`), with defaults
-> that work in apps that turn reflection-based System.Text.Json off
+> **What the fork adds:** the client constructors take optional JSON serializer options
+> (`responseSerializerOptions` and `requestSerializerOptions`), and `PostmarkJsonOptions` gives
+> copies of the defaults. The defaults work in apps that turn reflection-based System.Text.Json off
 > (`JsonSerializerIsReflectionEnabledByDefault=false`).
 >
 > **Versions:** the fork has its own version numbers (1.0.0 is based on upstream 5.4.1). Use a patch for a fix,

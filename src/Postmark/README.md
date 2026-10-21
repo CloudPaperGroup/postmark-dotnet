@@ -5,13 +5,14 @@
 > published as `CloudPaperGroup.PostmarkDotNet`. The API, the namespaces and the
 > assembly name are the same as the official `Postmark` package, so you can switch
 > between the two by changing only the package reference, as long as your code does not
-> use the two settings below (they exist only in this fork). Do not reference both
+> use the additions below (they exist only in this fork). Do not reference both
 > packages: they contain the same `Postmark.dll`.
 >
-> **What the fork adds:** the client's JSON serializer options can be replaced
-> (`PostmarkJsonOptions.Response` and `PostmarkJsonOptions.Request`),
-> and the defaults work in apps that turn reflection-based System.Text.Json off
-> (`JsonSerializerIsReflectionEnabledByDefault=false`).
+> **What the fork adds:** `PostmarkClient` and `PostmarkAdminClient` take optional JSON
+> serializer options (`responseSerializerOptions` and `requestSerializerOptions`). Leave them
+> out to use the defaults, which work in apps that turn reflection-based System.Text.Json off
+> (`JsonSerializerIsReflectionEnabledByDefault=false`). To pass your own, start from
+> `PostmarkJsonOptions.CreateDefaultResponse()` or `CreateDefaultRequest()`.
 >
 > The defaults cover only the calls that the client makes. If your app reads the webhook
 > models (`PostmarkDotNet.Webhooks`) itself with reflection off, pass options that have a
@@ -58,10 +59,10 @@ sending email, using the bounce API, templates, and additional options.
 
 ### 1.0.0 (CloudPaperGroup fork, based on upstream 5.4.1)
 
-- Added `PostmarkJsonOptions`: the JSON serializer options that the client uses for responses
-  and request bodies. The defaults set `DefaultJsonTypeInfoResolver`, so the client works in
-  apps that turn reflection-based System.Text.Json off. You can replace the options, for
-  example with a source-generated resolver.
+- The client constructors take optional `responseSerializerOptions` and `requestSerializerOptions`.
+  The defaults set `DefaultJsonTypeInfoResolver`, so the client works in apps that turn
+  reflection-based System.Text.Json off. You can pass your own options, for example with a
+  source-generated resolver. `PostmarkJsonOptions` gives copies of the defaults to start from.
 
 ### 5.4.1 (upstream)
 

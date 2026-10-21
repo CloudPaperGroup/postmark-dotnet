@@ -6,63 +6,27 @@ using System.Text.Json.Serialization.Metadata;
 namespace PostmarkDotNet
 {
     /// <summary>
-    /// The JSON serializer options that every Postmark client uses to read responses and write request bodies.
+    /// The default JSON serializer options of the Postmark clients, to start from when you pass your own options to a
+    /// client constructor.
     /// </summary>
     /// <remarks>
-    /// The defaults set <see cref="DefaultJsonTypeInfoResolver"/> explicitly, so the client still works when the host
+    /// The defaults set <see cref="DefaultJsonTypeInfoResolver"/> explicitly, so the clients still work when the host
     /// app turns reflection-based serialization off by default (<c>JsonSerializerIsReflectionEnabledByDefault=false</c>).
-    /// These settings exist only in the CloudPaperGroup fork, not in the official Postmark package.
+    /// This class and the serializer options parameters of the client constructors exist only in the CloudPaperGroup
+    /// fork, not in the official Postmark package.
     /// </remarks>
     public static class PostmarkJsonOptions
     {
-        private static JsonSerializerOptions _response = ReadOnly(CreateDefaultResponse());
-        private static JsonSerializerOptions _request = ReadOnly(CreateDefaultRequest());
+        private static readonly JsonSerializerOptions DefaultResponse = ReadOnly(CreateDefaultResponse());
+        private static readonly JsonSerializerOptions DefaultRequest = ReadOnly(CreateDefaultRequest());
 
         /// <summary>
-        /// The serializer options used to read every API response.
+        /// Creates a new copy of the default options that a client uses to read API responses.
         /// </summary>
         /// <remarks>
-        /// The default is read-only: to change it, assign new options, starting from <see cref="CreateDefaultResponse"/>
-        /// to keep the converters the API's date and string formats need. A source-generated resolver must cover
-        /// <see cref="PostmarkResponse"/> and every response type the client reads. Setting <c>null</c> restores the
-        /// default. Do not share the instance you assign with other code: the first call makes it read-only.
+        /// Keep the converters: the API's date and string formats need them. A source-generated resolver must cover
+        /// <see cref="PostmarkResponse"/> and every response type the client reads.
         /// </remarks>
-        /// <exception cref="ArgumentException">The options cannot read <see cref="PostmarkResponse"/>: they have no
-        /// <see cref="JsonSerializerOptions.TypeInfoResolver"/> while reflection-based serialization is off, or their
-        /// resolver does not cover the type (for example <see cref="JsonSerializerOptions.Default"/> with reflection off).
-        /// </exception>
-        public static JsonSerializerOptions Response
-        {
-            get => _response;
-            set => _response = value == null
-                ? ReadOnly(CreateDefaultResponse())
-                : RequireResolverFor(typeof(PostmarkResponse), value, nameof(Response));
-        }
-
-        /// <summary>
-        /// The serializer options used to write every request body.
-        /// </summary>
-        /// <remarks>
-        /// The default is read-only. Start from <see cref="CreateDefaultRequest"/> to keep the string escaping the API
-        /// expects. A source-generated resolver must cover <see cref="PostmarkMessage"/> and every request type the
-        /// client writes, including the types of your template models: a type it does not cover makes the send throw
-        /// <see cref="NotSupportedException"/>. Setting <c>null</c> restores the default. Do not share the instance you
-        /// assign with other code.
-        /// </remarks>
-        /// <exception cref="ArgumentException">The options cannot write <see cref="PostmarkMessage"/>: they have no
-        /// <see cref="JsonSerializerOptions.TypeInfoResolver"/> while reflection-based serialization is off, or their
-        /// resolver does not cover the type.</exception>
-        public static JsonSerializerOptions Request
-        {
-            get => _request;
-            set => _request = value == null
-                ? ReadOnly(CreateDefaultRequest())
-                : RequireResolverFor(typeof(PostmarkMessage), value, nameof(Request));
-        }
-
-        /// <summary>
-        /// Creates a new copy of the default <see cref="Response"/> options.
-        /// </summary>
         public static JsonSerializerOptions CreateDefaultResponse() => new JsonSerializerOptions
         {
             TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
@@ -74,8 +38,13 @@ namespace PostmarkDotNet
         };
 
         /// <summary>
-        /// Creates a new copy of the default <see cref="Request"/> options.
+        /// Creates a new copy of the default options that a client uses to write request bodies.
         /// </summary>
+        /// <remarks>
+        /// Keep the converter: it gives the string escaping the API expects. A source-generated resolver must cover
+        /// <see cref="PostmarkMessage"/> and every request type the client writes, including the types of your template
+        /// models: a type it does not cover makes the send throw <see cref="NotSupportedException"/>.
+        /// </remarks>
         public static JsonSerializerOptions CreateDefaultRequest() => new JsonSerializerOptions
         {
             TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
@@ -83,13 +52,19 @@ namespace PostmarkDotNet
             Converters = { new UnicodeJsonStringConverter() }
         };
 
+        internal static JsonSerializerOptions ResponseOrDefault(JsonSerializerOptions options, string parameterName) =>
+            options == null ? DefaultResponse : RequireResolverFor(typeof(PostmarkResponse), options, parameterName);
+
+        internal static JsonSerializerOptions RequestOrDefault(JsonSerializerOptions options, string parameterName) =>
+            options == null ? DefaultRequest : RequireResolverFor(typeof(PostmarkMessage), options, parameterName);
+
         private static JsonSerializerOptions ReadOnly(JsonSerializerOptions options)
         {
             options.MakeReadOnly();
             return options;
         }
 
-        private static JsonSerializerOptions RequireResolverFor(Type postmarkType, JsonSerializerOptions options, string propertyName)
+        private static JsonSerializerOptions RequireResolverFor(Type postmarkType, JsonSerializerOptions options, string parameterName)
         {
             var resolver = options.TypeInfoResolver;
             var canResolve = resolver == null
@@ -98,9 +73,10 @@ namespace PostmarkDotNet
             if (!canResolve)
             {
                 throw new ArgumentException(
-                    propertyName + " cannot handle " + postmarkType.Name + ". Use a TypeInfoResolver that covers the Postmark types, "
-                    + "for example by starting from CreateDefault" + propertyName + "().",
-                    "value");
+                    parameterName + " cannot handle " + postmarkType.Name + ". Use a TypeInfoResolver that covers the "
+                    + "Postmark types, for example by starting from PostmarkJsonOptions.CreateDefault"
+                    + (postmarkType == typeof(PostmarkResponse) ? "Response" : "Request") + "().",
+                    parameterName);
             }
             return options;
         }
