@@ -7,7 +7,7 @@
 > as long as your code does not use the two settings below. They exist only in this fork.
 >
 > **What the fork adds:** replaceable JSON serializer options
-> (`PostmarkClientBase.ResponseSerializerOptions` and `RequestSerializerOptions`), with defaults
+> (`PostmarkJsonOptions.Response` and `PostmarkJsonOptions.Request`), with defaults
 > that work in apps that turn reflection-based System.Text.Json off
 > (`JsonSerializerIsReflectionEnabledByDefault=false`).
 >

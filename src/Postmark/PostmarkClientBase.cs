@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using Postmark.Exceptions;
 
@@ -17,7 +15,7 @@ namespace PostmarkDotNet
     /// </summary>
     public abstract class PostmarkClientBase
     {
-        private static Lazy<ISimpleHttpClient> _staticClient =
+        private static Lazy<ISimpleHttpClient> _staticClient = 
             new Lazy<ISimpleHttpClient>(()=>new SimpleHttpClient()) ;
 
         /// <summary>
@@ -29,90 +27,6 @@ namespace PostmarkDotNet
         /// (for tests).
         /// </remarks>
         public static Func<ISimpleHttpClient> ClientFactory {get;set;} = () => _staticClient.Value;
-
-        private static JsonSerializerOptions _responseSerializerOptions = ReadOnly(CreateDefaultResponseSerializerOptions());
-        private static JsonSerializerOptions _requestSerializerOptions = ReadOnly(CreateDefaultRequestSerializerOptions());
-
-        /// <summary>
-        /// The serializer options used to read every API response.
-        /// </summary>
-        /// <remarks>
-        /// The default sets <see cref="DefaultJsonTypeInfoResolver"/> explicitly, so responses still read when the
-        /// host app turns reflection-based serialization off by default
-        /// (<c>JsonSerializerIsReflectionEnabledByDefault=false</c>). The default is read-only: to change it, assign new
-        /// options, starting from <see cref="CreateDefaultResponseSerializerOptions"/> to keep the converters the API's
-        /// date and string formats need. A source-generated resolver must cover <see cref="PostmarkResponse"/> and every
-        /// response type the client reads. Setting <c>null</c> restores the default. Do not share the instance you assign
-        /// with other code: the first call makes it read-only.
-        /// </remarks>
-        /// <exception cref="ArgumentException">The options have no <see cref="JsonSerializerOptions.TypeInfoResolver"/>
-        /// and reflection-based serialization is off, so they could not read any response.</exception>
-        public static JsonSerializerOptions ResponseSerializerOptions
-        {
-            get => _responseSerializerOptions;
-            set => _responseSerializerOptions = value == null
-                ? ReadOnly(CreateDefaultResponseSerializerOptions())
-                : RequireResolver(value, nameof(ResponseSerializerOptions));
-        }
-
-        /// <summary>
-        /// The serializer options used to write every request body.
-        /// </summary>
-        /// <remarks>
-        /// The default sets <see cref="DefaultJsonTypeInfoResolver"/> explicitly, for the same reason as
-        /// <see cref="ResponseSerializerOptions"/>, and is read-only. Start from
-        /// <see cref="CreateDefaultRequestSerializerOptions"/> to keep the string escaping the API expects. Setting
-        /// <c>null</c> restores the default. Do not share the instance you assign with other code.
-        /// </remarks>
-        /// <exception cref="ArgumentException">The options have no <see cref="JsonSerializerOptions.TypeInfoResolver"/>
-        /// and reflection-based serialization is off, so they could not write any request.</exception>
-        public static JsonSerializerOptions RequestSerializerOptions
-        {
-            get => _requestSerializerOptions;
-            set => _requestSerializerOptions = value == null
-                ? ReadOnly(CreateDefaultRequestSerializerOptions())
-                : RequireResolver(value, nameof(RequestSerializerOptions));
-        }
-
-        private static JsonSerializerOptions ReadOnly(JsonSerializerOptions options)
-        {
-            options.MakeReadOnly();
-            return options;
-        }
-
-        private static JsonSerializerOptions RequireResolver(JsonSerializerOptions options, string propertyName)
-        {
-            if (options.TypeInfoResolver == null && !JsonSerializer.IsReflectionEnabledByDefault)
-            {
-                throw new ArgumentException(
-                    propertyName + " needs a TypeInfoResolver, because reflection-based serialization is disabled in this app.",
-                    propertyName);
-            }
-            return options;
-        }
-
-        /// <summary>
-        /// Creates a new copy of the default <see cref="ResponseSerializerOptions"/>.
-        /// </summary>
-        public static JsonSerializerOptions CreateDefaultResponseSerializerOptions() => new JsonSerializerOptions
-        {
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
-            Converters =
-            {
-                new UnicodeJsonStringConverter(),
-                new DateTimeConverter()
-            }
-        };
-
-        /// <summary>
-        /// Creates a new copy of the default <see cref="RequestSerializerOptions"/>.
-        /// </summary>
-        public static JsonSerializerOptions CreateDefaultRequestSerializerOptions() => new JsonSerializerOptions
-        {
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
-            WriteIndented = true,
-            Converters = { new UnicodeJsonStringConverter() }
-        };
 
         protected static readonly string DATE_FORMAT = "yyyy-MM-dd";
 
@@ -162,7 +76,7 @@ namespace PostmarkDotNet
             //set a body for this request.
             if (message != null)
             {
-                var content = new JsonContent<TRequestBody>(message, RequestSerializerOptions);
+                var content = new JsonContent<TRequestBody>(message, PostmarkJsonOptions.Request);
                 request.Content = content;
             }
 
@@ -174,15 +88,13 @@ namespace PostmarkDotNet
 
             var body = await result.Content.ReadAsStringAsync();
 
-            var options = ResponseSerializerOptions;
-
-            if (JsonExtensions.TryDeserializeObject<TResponse>(body, options, out TResponse parsedResponse, out _)
+            if (JsonExtensions.TryDeserializeObject<TResponse>(body, PostmarkJsonOptions.Response, out TResponse parsedResponse, out _) 
                 && result.StatusCode == HttpStatusCode.OK)
             {
                 return parsedResponse;
             }
 
-            if (!JsonExtensions.TryDeserializeObject<PostmarkResponse>(body, options, out PostmarkResponse error, out var parseFailure))
+            if (!JsonExtensions.TryDeserializeObject<PostmarkResponse>(body, PostmarkJsonOptions.Response, out PostmarkResponse error, out var parseFailure))
             {
                 throw new PostmarkResponseException("The response from the API could not be parsed.", body, parseFailure);
             }

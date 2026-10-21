@@ -9,7 +9,7 @@
 > packages: they contain the same `Postmark.dll`.
 >
 > **What the fork adds:** the client's JSON serializer options can be replaced
-> (`PostmarkClientBase.ResponseSerializerOptions` and `RequestSerializerOptions`),
+> (`PostmarkJsonOptions.Response` and `PostmarkJsonOptions.Request`),
 > and the defaults work in apps that turn reflection-based System.Text.Json off
 > (`JsonSerializerIsReflectionEnabledByDefault=false`).
 
